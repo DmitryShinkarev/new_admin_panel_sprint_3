@@ -1,52 +1,31 @@
+import logging
+
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Q, F
 from django.http import JsonResponse
 from django.views.generic.detail import BaseDetailView
 from django.views.generic.list import BaseListView
 
-from movies.models import Film_work
+from movies.models import Film_work, TypeRole
 
+logger = logging.getLogger()
 
 class MoviesApiMixin:
     model = Film_work
     http_method_names = ["get"]
+    
+    def __get_film_persons(self, role_name: str): 
+        return ArrayAgg('persons__full_name', distinct=True, filter=(Q(personfilmwork__role=role_name))) 
 
     def get_queryset(self):
-
-        all_movies = Film_work.objects.values(
-            
-        ).annotate(
-            genres=ArrayAgg(
-                'genres__name',
-                distinct=True,
-            )
-        ).annotate(
-            writers=ArrayAgg(
-                'persons__full_name',
-                distinct=True,
-                filter=Q(
-                    personfilmwork__role='writer'
-                )
-            )
-        ).annotate(
-            actors=ArrayAgg(
-                'persons__full_name',
-                distinct=True,
-                filter=Q(
-                    personfilmwork__role='actor'
-                )
-            )
-        ).annotate(
-            directors=ArrayAgg(
-                'persons__full_name',
-                distinct=True,
-                filter=Q(
-                    personfilmwork__role='director'
-                )
-            )
+        
+        all_movies = Film_work.objects.values().annotate(
+            genres=ArrayAgg('genres__name',distinct=True),
+            actors=self.__get_film_persons(TypeRole.ACTOR),
+            writers=self.__get_film_persons(TypeRole.WRITER),
+            direcors=self.__get_film_persons(TypeRole.DIRECTOR)
         )
-
-        return all_movies.values()
+        return all_movies
 
     def render_to_response(self, context, **response_kwargs):
         return JsonResponse(context)
@@ -89,6 +68,6 @@ class MovieDetailApi(MoviesApiMixin, BaseDetailView):
                 "results": data,
             }
         except Exception as err:
-            print(err)
+            logger.error(err)
 
         return context
