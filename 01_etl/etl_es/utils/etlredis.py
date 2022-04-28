@@ -1,10 +1,7 @@
 import abc
-import json
 from datetime import datetime
 
 from redis import Redis
-
-from utils.encoder import EnhancedJSONEncoder
 
 
 class BaseStorage:

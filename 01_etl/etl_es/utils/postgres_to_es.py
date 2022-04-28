@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, MINYEAR
 from time import sleep
 from typing import Generator
 
@@ -74,16 +74,15 @@ class ETL:
             },
         ]
 
-        while True:
-            _ = (yield)
+        while _ := (yield):
 
-            for produscer in pg_queres:
+            for producer in pg_queres:
 
-                query = produscer["query"]
-                index = produscer["index"]
+                query = producer["query"]
+                index = producer["index"]
 
                 lasttime = self.redis.get_modified_time(index) or str(
-                    datetime(1990, 1, 1))
+                    datetime(MINYEAR, 1, 1, tzinfo=None))
                 movies_id = self.redis.get_modified_filmid()
                 movies_id.append("00000000-0000-0000-0000-000000000000")
 
@@ -113,8 +112,7 @@ class ETL:
     def enricher(self, transform: Generator) -> Generator:
         logger.info("** Enricher data **")
 
-        while True:
-            result = (yield)
+        while result := (yield):
 
             index = result["index"]
             data_mod_id = result["data"]
@@ -133,8 +131,7 @@ class ETL:
     def transform(self, load: Generator) -> Generator:
         logger.info("** Transformed data **")
 
-        while True:
-            result = (yield)
+        while result := (yield):
 
             index = result["index"]
             data_rows = result["data"]
@@ -158,8 +155,7 @@ class ETL:
     def load(self) -> Generator:
         logger.info("** Load data **")
 
-        while True:
-            transformed = (yield)
+        while transformed := (yield):
 
             index = transformed["index"]
             data = transformed["data"]
@@ -189,7 +185,6 @@ class ETL:
             return
         else:
             self.redis.set_status("etl", "running")
-            #self.es.indices.delete(index="movies", ignore=[400, 404])
             self.es.indices.create(index="movies",
                                    body=MOVIES_INDEX,
                                    ignore=[400, 404])

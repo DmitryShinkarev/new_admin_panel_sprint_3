@@ -16,10 +16,11 @@ RUN set -xe; \
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+COPY entrypoint.sh /etl/
 COPY requirements.txt /etl/
 
 # install dependencies
 RUN pip install --upgrade pip && \ 
     pip install -r requirements.txt --no-cache-dir
 
-CMD ["python", "run_etl.py"]
+ENTRYPOINT ["bash", "/etl/entrypoint.sh"]
