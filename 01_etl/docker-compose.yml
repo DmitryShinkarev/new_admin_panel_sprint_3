@@ -1,3 +1,7 @@
+networks:
+  app_movies_net:
+    external: true
+  default:
 
 volumes:
   static:
@@ -18,6 +22,8 @@ services:
       - ./movies_admin/create_schem.sql:/docker-entrypoint-initdb.d/create_schem.sql
     ports:
       - "5432:5432"
+    networks:
+      - app_movies_net
     env_file:
       - ./.dev.env
 
@@ -31,6 +37,8 @@ services:
       - db
     ports:
       - "8000:8000"
+    networks:
+      - app_movies_net
     env_file:
       - ./.dev.env
 
@@ -44,6 +52,8 @@ services:
       - ./static:/code/static/
     ports:
       - "80:80"
+    networks:
+      - app_movies_net
     depends_on:
       - admin_panel
 
@@ -58,6 +68,8 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     volumes:
       - esdata:/usr/share/elasticsearch/data
+    networks:
+      - app_movies_net
     ulimits:
       memlock:
         soft: -1
@@ -67,7 +79,9 @@ services:
     restart: unless-stopped
     container_name: redis
     ports:
-      - 6379:6379
+      - "6379:6379"
+    networks:
+      - app_movies_net  
     image: redis:6.2.5
     volumes:
       - redisdata:/data
@@ -81,6 +95,8 @@ services:
       - ./.dev.env
     volumes:
       - ./etl_es:/etl
+    networks:
+      - app_movies_net
     depends_on:
       - es
       - redis

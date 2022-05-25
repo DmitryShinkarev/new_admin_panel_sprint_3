@@ -11,8 +11,8 @@ from psycopg2.extras import RealDictCursor
 
 from utils.backoff import backoff
 from utils.encoder import EnhancedJSONEncoder, coroutine
-from utils.esindex import MOVIES_INDEX
-from utils.etlmodels import ETLMovie
+from utils.esindex import MOVIES_INDEX, GENRES_INDEX, PERSONS_INDEX
+from utils.etlmodels import ETLMovie, ETLGenre, ETLPerson
 from utils.etlredis import RedisStorage
 from utils.sql_queries import GENRES_QUERY, MOVIES_QUERY, PERSONS_QUERY
 
@@ -44,19 +44,7 @@ class ETL:
 
     @coroutine
     def extract(self, enricher: Generator) -> Generator:
-        """
-        Тут работает немного не так как было описано.
-        Сначала проходят два запроса из таблиц Жанры и Персоны
-        на изменившиеся строки по дате модификации и в enricher
-        забирается уникальный массив id связанных фильмов в хранилище
-        Redis. После этого итоги этих запросов вылетают из цикла
-        не загрузившись в es.
-        Последней идет запрос с фильмами. Где одним запросом через 
-        union берутся строки изменившихся фильмов по дате модификации
-        а так же все фильмы с поиском по идентификатору, 
-        который мы сохранили ранее в редис и уже далее эти данные
-        в соответствии с схемой через датакласс приходят в es.
-        """
+
         logger.info("** Extract DB Postgess **")
 
         pg_queres = [
@@ -140,9 +128,14 @@ class ETL:
             for row in data_rows:
                 if index == "movies":
                     dataclass = ETLMovie.from_dict_cls({**row})
-                    transformed_list.append(dataclass)
+                elif index == "genres":
+                    dataclass = ETLGenre.from_dict_cls({**row})
+                elif index == "persons":
+                    dataclass = ETLPerson.from_dict_cls({**row})
                 else:
                     continue
+
+                transformed_list.append(dataclass)
 
             load.send({
                 "index": index,
@@ -185,8 +178,17 @@ class ETL:
             return
         else:
             self.redis.set_status("etl", "running")
+            
             self.es.indices.create(index="movies",
                                    body=MOVIES_INDEX,
+                                   ignore=[400, 404])
+
+            self.es.indices.create(index="genres",
+                                   body=GENRES_INDEX,
+                                   ignore=[400, 404])
+
+            self.es.indices.create(index="persons",
+                                   body=PERSONS_INDEX,
                                    ignore=[400, 404])
 
         load = self.load()

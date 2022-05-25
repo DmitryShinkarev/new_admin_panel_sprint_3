@@ -36,6 +36,7 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
 
 INTERNAL_IPS = [
     "127.0.0.1",
+    "localhost",
 ]
 
 include(

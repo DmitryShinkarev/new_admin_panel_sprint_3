@@ -21,11 +21,12 @@ WITH persons AS (
     LIMIT 100
 )
 SELECT
-    p.full_name as name,
+    p.full_name,
     p.id as id,
     p.modified as modified,
-    pfw.role as person_role,
-    ARRAY_AGG(DISTINCT jsonb_build_object('fwid', pfw.filmwork_id)) AS array_id
+    pfw.role as role,
+    ARRAY_AGG(DISTINCT jsonb_build_object('fwid', pfw.filmwork_id)) AS array_id,
+    ARRAY_AGG(DISTINCT pfw.filmwork_id) AS film_ids
 
 FROM persons p
 LEFT JOIN person_film_work pfw 
@@ -97,6 +98,7 @@ WITH genres AS (
 SELECT
     g.name,
     g.id as id,
+    g.description as description,
     g.modified,
     ARRAY_AGG(DISTINCT jsonb_build_object('fwid', gfw.filmwork_id)) AS array_id
 
@@ -107,6 +109,7 @@ LEFT JOIN genre_film_work gfw
 GROUP BY 
     g.name,
     g.id,
+    g.description,
     g.modified
 
 ORDER BY g.modified DESC
