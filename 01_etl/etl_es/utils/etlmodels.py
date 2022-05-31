@@ -76,7 +76,7 @@ class ETLMovie:
         "id",
         "title",
         "description",
-        "rating",
+        "imdb_rating",
         "genre",
         "writers_names",
         "actors_names",
@@ -88,7 +88,7 @@ class ETLMovie:
     id: uuid.UUID
     title: str
     description: str
-    rating: float
+    imdb_rating: float
     genre: typing.List[str]
     writers_names: typing.List[str]
     actors_names: typing.List[str]
@@ -102,7 +102,7 @@ class ETLMovie:
             id=dict_["id"],
             title=str(dict_["title"]),
             description=str(dict_["description"]),
-            rating=float(dict_["rating"]),
+            imdb_rating=float(dict_["imdb_rating"]),
             genre=list(map(str, dict_["genres"])),
             writers_names=ETLPersonMovie.dict_to_list(dict_["writers_names"]),
             actors_names=ETLPersonMovie.dict_to_list(dict_["actors_names"]),

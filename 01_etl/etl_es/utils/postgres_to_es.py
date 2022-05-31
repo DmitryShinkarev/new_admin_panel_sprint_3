@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import json
 import logging
 import os
@@ -18,9 +19,29 @@ from utils.sql_queries import GENRES_QUERY, MOVIES_QUERY, PERSONS_QUERY
 
 logger = logging.getLogger()
 
-from dotenv import load_dotenv
 
 load_dotenv()
+
+ES_MODELS = [
+    {
+        "index": "genres",
+        "query": GENRES_QUERY,
+        "etlmodel": ETLGenre,
+        "index_es_model": GENRES_INDEX
+    },
+    {
+        "index": "persons",
+        "query": PERSONS_QUERY,
+        "etlmodel": ETLPerson,
+        "index_es_model": PERSONS_INDEX
+    },
+    {
+        "index": "movies",
+        "query": MOVIES_QUERY,
+        "etlmodel": ETLMovie,
+        "index_es_model": MOVIES_INDEX
+    },
+]
 
 
 class ETL:
@@ -47,27 +68,13 @@ class ETL:
 
         logger.info("** Extract DB Postgess **")
 
-        pg_queres = [
-            {
-                "index": "genres",
-                "query": GENRES_QUERY
-            },
-            {
-                "index": "persons",
-                "query": PERSONS_QUERY
-            },
-            {
-                "index": "movies",
-                "query": MOVIES_QUERY
-            },
-        ]
-
         while _ := (yield):
 
-            for producer in pg_queres:
+            for producer in ES_MODELS:
 
                 query = producer["query"]
                 index = producer["index"]
+                etlmodel = producer["etlmodel"]
 
                 lasttime = self.redis.get_modified_time(index) or str(
                     datetime(MINYEAR, 1, 1, tzinfo=None))
@@ -94,7 +101,9 @@ class ETL:
 
                         self.redis.set_modified_time(index,
                                                      all_rows[0]["modified"])
-                        enricher.send({"index": index, "data": all_rows})
+                        enricher.send({"index": index,
+                                       "data": all_rows,
+                                       "etlmodel": etlmodel})
 
     @coroutine
     def enricher(self, transform: Generator) -> Generator:
@@ -123,18 +132,11 @@ class ETL:
 
             index = result["index"]
             data_rows = result["data"]
+            etl_model = result["etlmodel"]
             transformed_list = []
 
             for row in data_rows:
-                if index == "movies":
-                    dataclass = ETLMovie.from_dict_cls({**row})
-                elif index == "genres":
-                    dataclass = ETLGenre.from_dict_cls({**row})
-                elif index == "persons":
-                    dataclass = ETLPerson.from_dict_cls({**row})
-                else:
-                    continue
-
+                dataclass = etl_model.from_dict_cls({**row})
                 transformed_list.append(dataclass)
 
             load.send({
@@ -178,18 +180,11 @@ class ETL:
             return
         else:
             self.redis.set_status("etl", "running")
-            
-            self.es.indices.create(index="movies",
-                                   body=MOVIES_INDEX,
-                                   ignore=[400, 404])
 
-            self.es.indices.create(index="genres",
-                                   body=GENRES_INDEX,
-                                   ignore=[400, 404])
-
-            self.es.indices.create(index="persons",
-                                   body=PERSONS_INDEX,
-                                   ignore=[400, 404])
+            for model in ES_MODELS:
+                self.es.indices.create(index=model["index"],
+                                       body=model["index_es_model"],
+                                       ignore=[400, 404])
 
         load = self.load()
         transform = self.transform(load)

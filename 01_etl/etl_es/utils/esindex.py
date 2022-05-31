@@ -46,7 +46,7 @@ MOVIES_INDEX = """
       "id": {
         "type": "keyword"
       },
-      "rating": {
+      "imdb_rating": {
         "type": "float"
       },
       "genre": {
