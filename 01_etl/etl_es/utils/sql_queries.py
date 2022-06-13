@@ -16,9 +16,9 @@ PERSONS_QUERY = """
 WITH persons AS (
     SELECT p.* 
     FROM person p 
-    WHERE p.modified > %s 
+    WHERE p.modified >= %s 
     ORDER BY p.modified DESC
-    LIMIT 100
+    --LIMIT 100
 )
 SELECT
     p.full_name,
@@ -90,9 +90,9 @@ GENRES_QUERY = """
 WITH genres AS (
     SELECT g.* 
     FROM genre g 
-    WHERE g.modified > %s 
+    WHERE g.modified >= %s 
     ORDER BY g.modified DESC
-    LIMIT 100
+    --LIMIT 100
 )
 
 SELECT
@@ -113,5 +113,5 @@ GROUP BY
     g.modified
 
 ORDER BY g.modified DESC
-LIMIT 100;
+--LIMIT 100;
 """
