@@ -82,7 +82,8 @@ class ETLMovie:
         "actors_names",
         "director",
         "writers",
-        "actors",
+        "actors"
+        "directors",
     )
 
     id: uuid.UUID
@@ -95,6 +96,7 @@ class ETLMovie:
     director: typing.List[str]
     writers: typing.List["ETLPersonMovie"]
     actors: typing.List["ETLPersonMovie"]
+    directors: typing.List["ETLPersonMovie"]
 
     @classmethod
     def from_dict_cls(cls, dict_: typing.Dict[str, typing.Any]) -> "ETLMovie":
@@ -109,4 +111,5 @@ class ETLMovie:
             director=ETLPersonMovie.dict_to_list(dict_["director"]),
             writers=ETLPersonMovie.dict_to_list_cls(dict_["writers"]),
             actors=ETLPersonMovie.dict_to_list_cls(dict_["actors"]),
+            directors=ETLPersonMovie.dict_to_list_cls(dict_["directors"]),
         )
