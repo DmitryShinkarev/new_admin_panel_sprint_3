@@ -90,6 +90,19 @@ MOVIES_INDEX = """
           }
         }
       },
+       "directors": {
+        "type": "nested",
+        "dynamic": "strict",
+        "properties": {
+          "id": {
+            "type": "keyword"
+          },
+          "name": {
+            "type": "text",
+            "analyzer": "ru_en"
+          }
+        }
+      },
       "writers": {
         "type": "nested",
         "dynamic": "strict",

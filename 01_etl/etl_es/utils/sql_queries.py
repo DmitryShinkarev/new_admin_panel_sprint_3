@@ -56,6 +56,7 @@ WITH movies as (
     ARRAY_AGG(DISTINCT p.full_name) FILTER (WHERE pfw.role = 'director') as director,
     ARRAY_AGG(DISTINCT jsonb_build_object('id', p.id, 'name', p.full_name, 'modified', p.modified)) FILTER (WHERE pfw.role = 'actor') as actors,
     ARRAY_AGG(DISTINCT jsonb_build_object('id', p.id, 'name', p.full_name, 'modified', p.modified)) FILTER (WHERE pfw.role = 'writer') as writers,
+    ARRAY_AGG(DISTINCT jsonb_build_object('id', p.id, 'name', p.full_name, 'modified', p.modified)) FILTER (WHERE pfw.role = 'director') as directors,
     ARRAY_AGG(DISTINCT g.name) AS genres
     
     FROM film_work as fw
