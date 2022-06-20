@@ -82,7 +82,7 @@ class ETLMovie:
         "actors_names",
         "director",
         "writers",
-        "actors"
+        "actors",
         "directors",
     )
 
